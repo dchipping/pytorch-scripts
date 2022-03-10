@@ -1,5 +1,3 @@
-# 3a) Ablation study of SGD + Momentum vs. Adam
-
 import time
 from enum import Enum
 from typing import Generator, List, Tuple
@@ -107,7 +105,7 @@ def img_cls_train(trainloader: DataLoader, modification: Modification, model_nam
     
     end = time.time()
     
-    # 3b.VI) Compute final metrics
+    # Compute final metrics
     totalTime = end-start
     inputs, labels = iter(trainloader).next()
     outputs = model(inputs)
@@ -117,7 +115,7 @@ def img_cls_train(trainloader: DataLoader, modification: Modification, model_nam
     finalAcc = get_accuracy(predicted, labels)
     metrics = [totalTime, finaLoss, finalAcc]
 
-    # 3b.VII/VIII) If specified, save model to disk
+    # If specified, save model to disk
     if model_name:
         torch.save(model.state_dict(), f"{model_name}_img_cls_model.pt")
 
@@ -193,19 +191,19 @@ def k_folds(dataset: Dataset, k: int) -> Generator:
 
 
 if __name__ == "__main__":
-    print("\n#### COMP0090-CW1 - Task 3 ####\n")
+    print("\n#### SGD vs Adam ####\n")
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     global_transforms = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
-    # 3b.I) Split data into development set
+    # Split data into development set
     dev_batch_size = 20
     dev_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=global_transforms)
     dev_dataloader = torch.utils.data.DataLoader(dev_set, batch_size=dev_batch_size, shuffle=False)
 
-    # 3b.I) Split data into holdout set
+    #  Split data into holdout set
     holdout_batch_size = 4
     holdout_set = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=global_transforms)
     holdout_loader = torch.utils.data.DataLoader(holdout_set, batch_size=holdout_batch_size, shuffle=False)
@@ -213,17 +211,17 @@ if __name__ == "__main__":
     # Global store of all metrics during train/val/test
     allMetrics = {}
 
-    # 3b.V/VI/VII/VIII) Execute operations twice for each modificiation
+    # Execute operations twice for each modificiation
     for modification in [Modification.SGD, Modification.Adam]:
         print(f"\n=== Running model with {modification.name} ===")
         
-        # 3b.V) Run the cross validation scheme for modification
+        # Run the cross validation scheme for modification
         folds = 3
         kfolds_dev_set = k_folds(dev_set, folds)
         for k, (train_idxs, val_idxs) in enumerate(kfolds_dev_set, 0):
             print(f"\n=== {modification.name} CV - Fold {k+1} ===")
 
-            # 3b.III) Summary of random split
+            # Summary of random split
             print(f"Train set of size {len(train_idxs)}")
             print(f"Validation set of size {len(val_idxs)} (1 fold from index {val_idxs[0]}-{val_idxs[-1]})")
 
@@ -235,19 +233,19 @@ if __name__ == "__main__":
             train_set = torch.utils.data.DataLoader(dev_set, batch_size=dev_batch_size, sampler=train_set_sampler)
             val_set = torch.utils.data.DataLoader(dev_set, batch_size=dev_batch_size, sampler=val_set_sampler)
 
-            # 3b.V) Train model for using train data
+            # Train model for using train data
             print("Training model on test set...")
             model, metrics = img_cls_train(train_set, modification)
             print("Model succesfully trained on test split")
 
-            # 3b.VI) Loss, Speed & Accuracy on train set during fold
+            # Loss, Speed & Accuracy on train set during fold
             print(f"\n=== Train Metrics {modification.name} CV Fold {k+1} ===")
             trainTime, trainLoss, trainAcc = metrics
             print("Total Time: {:.2f}s".format(trainTime))
             print("Final Loss: {:.3f}".format(trainLoss))
             print("Final Accuracy: {:.3f}".format(trainAcc))
 
-            # 3b.VI) Loss, Speed & Accuracy on validation set during fold
+            # Loss, Speed & Accuracy on validation set during fold
             print(f"=== Validation Metrics {modification.name} CV Fold {k+1} ===")
             print("Running model on validation set...")
             valTime, valLoss, valAcc = img_cls_test(val_set, model)
@@ -255,10 +253,10 @@ if __name__ == "__main__":
             print("Final Loss: {:.3f}".format(valLoss))
             print("Final Accuracy: {:.3f}".format(valAcc))
 
-            # 3b.VI) Save result for overall summary
+            # Save result for overall summary
             allMetrics[k] = metrics
 
-        # 3b.VI) Overall summary of 3-Fold CV Scheme
+        # Overall summary of 3-Fold CV Scheme
         print(f"\n=== Summary of {modification.name} Cross Validation ===")
         totalTime, totalAcc, totalLoss = 0., 0., 0.
         print("{:<8} {:<7} {:<7} {:<7}".format('k-Fold','Time','Loss','Accuracy'))
@@ -275,13 +273,13 @@ if __name__ == "__main__":
         print("Overall Averaged Loss: {:.3f}".format(avgLoss))
         print("Overall Averaged Accuracy: {:.3f}".format(avgAccuracy))
         
-        # 3b.VII) Train two further models using the entire development set
+        # Train two further models using the entire development set
         print(f"\n=== Training {modification.name} w/o Cross Validation ===")
-        model_name = f"task3_{modification.name}_new"
+        model_name = f"{modification.name}_new"
         print("Training model on test set...")
         model, _ = img_cls_train(dev_dataloader, modification, model_name)
 
-        # 3b.IX) Model's metrics on holdout set vs. prior cross validation
+        # Model's metrics on holdout set vs. prior cross validation
         print(f"\n=== {modification.name} - Holdout vs. Cross Validation ===")
         print("Running model on holdout set...")
         holdoutTime, holdoutLoss, holdoutAcc = img_cls_test(holdout_loader, model)

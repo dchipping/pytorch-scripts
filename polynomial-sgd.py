@@ -1,10 +1,8 @@
 import time
-
 import torch
 from torch import nn
 
 
-# 1a)
 def polynomial_fun(x: float, w: torch.Tensor):
     """
     Returns the 3rd order polynomial using some input weights (w)
@@ -21,7 +19,6 @@ def polynomial_fun(x: float, w: torch.Tensor):
     return y
 
 
-# 1b)
 def fit_polynomial_ls(data: torch.Tensor, M: int) -> torch.Tensor:
     """
     Uses least squares regression to fit a M order polynomial to data
@@ -42,7 +39,6 @@ def fit_polynomial_ls(data: torch.Tensor, M: int) -> torch.Tensor:
     return w
 
 
-# 1c)
 def fit_polynomial_sgd(data: torch.Tensor, M: int, learning_rate: float, batch_size: int) -> torch.Tensor:
     """
     Minibatch SGD Algorithim using MSE for loss
@@ -94,38 +90,38 @@ def fit_polynomial_sgd(data: torch.Tensor, M: int, learning_rate: float, batch_s
     return w.data
 
 
-# 1d.VI) Accuracy of w and y using R-squared measure
+# Accuracy of w and y using R-squared measure
 def get_accuracy(predicted: torch.Tensor, ground_truth: torch.Tensor) -> float:
     """Calcualtes accuracy of a prediciton given some ground truth"""
     gtMean = torch.mean(ground_truth).item()
     return 1 - sum((ground_truth - predicted)**2)/sum((ground_truth-gtMean)**2)
 
 
-# 1d.VI) RMSE of w and y
+# RMSE of w and y
 def root_mean_square(predicted: torch.Tensor, ground_truth: torch.Tensor) -> float:
     """Calcualtes root mean square of a prediciton given some ground truth"""
     return torch.sqrt(torch.mean((predicted - ground_truth)**2)).item()
 
 
 if __name__ == "__main__":
-    print("\n#### COMP0090-CW1 - Task 1 ####\n")
-    # 1d.I) Intialise M = 3 and w = [1,2,3,4].T
+    print("\n#### Polynomial SGD ####\n")
+    # Intialise M = 3 and w = [1,2,3,4].T
     M = 3
     w = torch.tensor([[1., 2., 3., 4.]]).T
     
-    # 1d.I) Generate training set with Gauss noise
+    # Generate training set with Gauss noise
     x_train = torch.randint(-20, 20, (100,), dtype=torch.float32)
     y_train_true = x_train.clone().apply_(lambda x: polynomial_fun(x, w))
     y_train = torch.normal(y_train_true, 0.2) # Add guassian noise sd=0.2
     train_data = torch.stack((x_train, y_train), dim=1)
 
-    # 1d.I) Generate test set with Gauss noise
+    # Generate test set with Gauss noise
     x_test = torch.randint(-20, 20, (50,), dtype=torch.float32)
     y_test_true = x_test.clone().apply_(lambda x: polynomial_fun(x, w))
     y_test = torch.normal(y_test_true, 0.2) # Add guassian noise sd=0.2
     test_data = torch.stack((x_test, y_test), dim=1)
 
-    # 1d.II) Find w using fit_polynomial_ls() and compute y_hat_ls
+    # Find w using fit_polynomial_ls() and compute y_hat_ls
     M_ls = 4
     start_ls = time.time()
     w_ls = fit_polynomial_ls(train_data, M_ls)
@@ -133,19 +129,19 @@ if __name__ == "__main__":
     y_hat_ls_train = (torch.vander(x_train, M_ls+1) @ w_ls).flatten()
     y_hat_ls_test = (torch.vander(x_test, M_ls+1) @ w_ls).flatten()
 
-    # 1d.III) Mean/sd differences between train data and true polynomial
+    # Mean/sd differences between train data and true polynomial
     y_train_delta = y_train - y_train_true
     y_train_delta_mean = torch.mean(y_train_delta)
     y_train_delta_std = torch.std(y_train_delta)
     print("\nTrain set vs True Polynomial - Mean: {:.3f}, Std: {:.3f}".format(y_train_delta_mean, y_train_delta_std))
 
-    # 1d.III) Mean/sd differences between y_hat_ls and true polynomial
+    # Mean/sd differences between y_hat_ls and true polynomial
     y_hat_ls_train_delta = y_hat_ls_train - y_train_true
     y_hat_ls_train_delta_mean = torch.mean(y_hat_ls_train_delta)
     y_hat_ls_train_delta_std = torch.std(y_hat_ls_train_delta)
     print("\nLS predicted vs True Polynomial - Mean: {:.3f}, Std: {:.3f}".format(y_hat_ls_train_delta_mean, y_hat_ls_train_delta_std))
 
-    # 1d.IV) Find w using fit_polynomial_sgd() and compute y_hat_sgd
+    # Find w using fit_polynomial_sgd() and compute y_hat_sgd
     M_sgd = 4
     learning_rate, batch_size = 1e-10, 10 # Found generally good perf. with these + 50 epochs
     start_sgd = time.time()
@@ -155,7 +151,7 @@ if __name__ == "__main__":
     y_hat_sgd_train = (torch.vander(x_train, M_sgd+1) @ w_sgd).flatten() 
     y_hat_sgd_test = (torch.vander(x_test, M_sgd+1) @ w_sgd).flatten()
 
-    # 1d.V) Mean/sd differences between y_hat_sgd and true polynomial
+    # Mean/sd differences between y_hat_sgd and true polynomial
     y_hat_sgd_train_delta = y_hat_sgd_train - y_train_true
     y_hat_sgd_train_delta_mean = torch.mean(y_hat_sgd_train_delta)
     y_hat_sgd_train_delta_std = torch.std(y_hat_sgd_train_delta)
@@ -164,7 +160,7 @@ if __name__ == "__main__":
     # Scale 3rd order weights to 4th order for RMSE calcualations
     w_scaled = torch.cat([w, torch.zeros((1,1))], dim=0)
 
-    # 1d.VI) Accuracy of fit_polynomial_ls() vs. test set and RMSE of w and y
+    # Accuracy of fit_polynomial_ls() vs. test set and RMSE of w and y
     y_hat_ls_test = (torch.vander(x_test, M_ls+1) @ w_ls).flatten()
     test_ls_acc = get_accuracy(y_hat_ls_test, y_test_true) # R-squared
     w_ls_rmse = root_mean_square(w_ls, w_scaled)
@@ -174,7 +170,7 @@ if __name__ == "__main__":
     print("w LS RMSE: {:.3f}".format(w_ls_rmse))
     print("y LS RMSE: {:.3f}".format(y_ls_rmse))
 
-    # 1d.VI) Accuracy of fit_polynomial_sgd() vs. test set and RMSE of w and y
+    # Accuracy of fit_polynomial_sgd() vs. test set and RMSE of w and y
     y_hat_sgd_test = (torch.vander(x_test, M_sgd+1) @ w_sgd).flatten()
     test_sgd_acc = get_accuracy(y_hat_sgd_test, y_test_true) # R-squared
     w_sgd_rmse = root_mean_square(w_sgd, w_scaled)
@@ -184,7 +180,7 @@ if __name__ == "__main__":
     print("w SGD RMSE: {:.3f}".format(w_sgd_rmse))
     print("y SGD RMSE: {:.3f}".format(y_sgd_rmse))
 
-    # 1d.VII) Compare speed of fit_polynomial_ls() vs. fit_polynomial_sgd()
+    # Compare speed of fit_polynomial_ls() vs. fit_polynomial_sgd()
     ls_time = round(end_ls - start_ls, 5)
     sgd_time = round(end_sgd - start_sgd, 5)
     print("\n=== LS vs. SGD Speed ===")

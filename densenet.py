@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw
 import matplotlib.pyplot as plt
 
 
-# 2a.I) Create DenseLayer for dense_block()
+# Create DenseLayer for dense_block()
 class DenseLayer(nn.Module):
     """Following DenseNet-BC Dense Layer using BN-ReLU-Conv"""
     def __init__(self, in_channels, growth_rate):
@@ -47,7 +47,7 @@ class TransitionLayer(nn.Module):
         return output
 
 
-# 2a.II) Implement network architecture
+# Implement network architecture
 class DesneNet3(nn.Module):
     """Implements a DenseNet of 3 dense blocks of 4 dense layers each
     following original network architecture: https://arxiv.org/abs/1608.06993v5"""
@@ -65,7 +65,7 @@ class DesneNet3(nn.Module):
         # Initial 2x2 Max Pooling (replaces 3x3 Max Pooling)
         self.architecture.add_module(f"pool0", nn.MaxPool2d(2, 2))
 
-        # 2a.I) Member function to create a dense block of block_size dense layers
+        # Member function to create a dense block of block_size dense layers
         def dense_block(in_channels) -> nn.Sequential:
             denseBlock = nn.Sequential()
             for i in range(block_size):
@@ -73,7 +73,7 @@ class DesneNet3(nn.Module):
                 denseBlock.add_module(f"denseLayer{i}", denseLayer)
             return denseBlock
 
-        # 2a.II) Create num_blocks of dense blocks and transition layers
+        # Create num_blocks of dense blocks and transition layers
         channels = 2*growth_rate
         for i in range(num_blocks):
             self.architecture.add_module(f"denseBlock{i}", dense_block(channels))
@@ -97,7 +97,7 @@ class DesneNet3(nn.Module):
         return x
 
 
-# 2b) Cutout Algorithm
+# Cutout Algorithm
 def cutout(img: torch.tensor, s: int) -> torch.tensor:
     """
     Takes an image and applys the cutout algoritihm: https://arxiv.org/abs/1708.04552
@@ -109,13 +109,13 @@ def cutout(img: torch.tensor, s: int) -> torch.tensor:
     """
     width, height = img[0,:,:].shape
     
-    # 2b.II) Uniformly sampled mask size between 0 to s
+    # Uniformly sampled mask size between 0 to s
     maskSize = random.randint(0, s)
 
-    # 2b.III) Randomly selected location for center of mask
+    # Randomly selected location for center of mask
     y, x = (random.randint(0, height), random.randint(0, width))
 
-    # 2b.I) Top/bottom & left/right bounds of square mask
+    # Top/bottom & left/right bounds of square mask
     t, b = max(y - maskSize//2, 0), min(y + maskSize//2, height) # Min/Max clips edges
     l, r = max(x - maskSize//2, 0), min(x + maskSize//2, width) # Min/Max clips edges
 
@@ -127,8 +127,8 @@ def cutout(img: torch.tensor, s: int) -> torch.tensor:
 if __name__ == "__main__":
     TRAIN_MODEL = False # To skip training (~45mins) set this variable to False
 
-    print("\n#### COMP0090-CW1 - Task 2 ####\n")
-    print(f"Running task 2 {'by training new model' if TRAIN_MODEL else 'from saved model'}...")
+    print("\n#### DenseNet ####\n")
+    print(f"Running DenseNet {'by training new model' if TRAIN_MODEL else 'from saved model'}...")
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
 
     # Load in the train data for train set
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     train_transforms = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-        transforms.Lambda(lambda x: cutout(x, 20)) # 2b.V) Apply the cutout algo to train data
+        transforms.Lambda(lambda x: cutout(x, 20)) # Apply the cutout algo to train data
     ])
     train_set = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=train_transforms)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=train_batch_size, shuffle=True, num_workers=2)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     train_images, _ = iter(train_loader).next()
     train_images = train_images/2 + 0.5
 
-    # 2b.IV) Montage of 16 images with cutout applied to cutout.png
+    # Montage of 16 images with cutout applied to cutout.png
     print('Creating montage of 16 images with cutout...') 
     torchvision.utils.save_image(torchvision.utils.make_grid(train_images[:16], nrow=4), fp='cutout_new.png')
 
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     test_set = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=test_transforms)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=test_batch_size, shuffle=False, num_workers=2)
 
-    # 2a.III) Create and summarise DenseNet architecture
+    # Create and summarise DenseNet architecture
     denseNet = DesneNet3()
     print("\n=== DenseNet3 Architecture ===")
     print(str(denseNet.architecture))
@@ -167,7 +167,7 @@ if __name__ == "__main__":
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = optim.SGD(denseNet.parameters(), lr=0.001, momentum=0.9)
 
-    # 2c.I) Begin training DenseNet3 model
+    # Begin training DenseNet3 model
     if TRAIN_MODEL:
         print('\nBegining model training...\n')
         start = time.time()
@@ -192,7 +192,7 @@ if __name__ == "__main__":
                 sys.stdout.write("[{:04d}] @ {:.2f}s - Loss: {:<10.3f}\r".format(batch, currentTime, loss))
                 sys.stdout.flush()
             
-            # 2c.IV) Compute accuracy vs. test set after each epoch
+            # Compute accuracy vs. test set after each epoch
             print("Running model on test set...    ")
             true_postives = 0
             for test_images, test_labels in iter(test_loader):
@@ -202,12 +202,12 @@ if __name__ == "__main__":
             accuracy = (true_postives/len(test_set)).item()
             print(f"Epoch {epoch} test set accuracy: {round(accuracy, 4)}")
 
-    # 2c.II/III) Once trained save the model
-    # torch.save(denseNet.state_dict(), 'task2_densenet3_model_new.pt') # Un/comment this to overwrite saved model
-    denseNet.load_state_dict(torch.load('task2_densenet3_model.pt')) # Un/comment to load in a saved model
+    # Once trained save the model
+    # torch.save(denseNet.state_dict(), 'densenet3_model_new.pt') # Un/comment this to overwrite saved model
+    denseNet.load_state_dict(torch.load('densenet3_model.pt')) # Un/comment to load in a saved model
 
 
-    # 2c.V) Montage of 36 test images, captions indicating gt vs. predicted   
+    # Montage of 36 test images, captions indicating gt vs. predicted   
     print('\nCreating montage of 36 images...') 
     test_images, test_labels = iter(test_loader).next()
     outputs = denseNet(test_images)
