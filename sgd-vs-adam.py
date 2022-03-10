@@ -13,7 +13,7 @@ from torchvision import transforms
 
 
 class Net(nn.Module):
-    """CNN taken from img_cls Lab"""
+    """Basic performant CNN model"""
     def __init__(self):
         super().__init__()
         self.conv1 = nn.Conv2d(3, 6, 5)
